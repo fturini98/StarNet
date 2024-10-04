@@ -1,0 +1,13 @@
+StraNet.egg-info/
+__pycache__
+
+#ingore latex file
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
