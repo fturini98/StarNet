@@ -14,6 +14,7 @@ setup(
         'numpy',
         'pandas',
         'scipy',
+        'ezpadova @ git+https://github.com/mfouesneau/ezpadova.git@v2.0#egg=ezpadova'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

@@ -11,3 +11,4 @@ __pycache__
 *.bcf
 *.blg
 *.run.xml
+*log.txt
