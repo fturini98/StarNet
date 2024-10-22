@@ -65,6 +65,9 @@ def calculate_IMF(df, mini_column='Mini', imf_column='int_IMF'):
     # Compute the difference of the integral (Y values)
     d_integral_IMF = np.diff(integral_IMF)  # Successive differences of the integral
     d_Mini = np.diff(Mini)  # Successive differences of Mini (x values)
+    
+    # Handle division by zero: Replace zeros with a small value (e.g., 1e-10)
+    d_Mini[d_Mini == 0] = 1e-10
 
     # Compute Y(x)
     Y = d_integral_IMF / d_Mini
@@ -158,9 +161,13 @@ def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
     #Evaluation of the IMF for each single value
     IMF_interpolate=calculate_IMF(r_interpolate)
     
+    #Elimitation of non decrising IMF to ensure a right generation of the star population
     r_interpolate=remove_non_strictly_decreasing(r_interpolate,IMF_interpolate)
+    
+    #Re evaluation of the IMF
     IMF_interpolate=calculate_IMF(r_interpolate)
-    # Esempio di utilizzo
+    
+    #Generation of the syntetic diagram's values
     df_out_int= generate_sintetic_diagram_from_isochrone(r_interpolate, N_samples=int(N_samples))
     return df_out_int
 
