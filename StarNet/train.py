@@ -37,6 +37,11 @@ def load_data(min_age=0.0,max_age=0.0,age_step=0.0,Z_min=0.0152,Z_max=0.03,Z_ste
     df_out= dict(list(groups))
     return df_out
 
+######################Simple population functions ######################
+#these functions work only for a df that rappresents a simple population#
+#with a single value of Zini and logAge.                                #
+#########################################################################
+
 def calculate_IMF(df, mini_column='Mini', imf_column='int_IMF'):
     """
     Calculates the IMF (Initial Mass Function) from a given DataFrame.
@@ -125,7 +130,7 @@ def interpolate_with_equispaced_mini(df, mini_column, num_points):
 
     return df_interpolated
 
-def generate_sintetic_diagram(df, N_samples=10000):
+def generate_sintetic_diagram_from_isochrone(df, N_samples=10000):
     # Rimuovere duplicati dalla colonna int_IMF
     df_unique = df.drop_duplicates(subset='int_IMF')
     
@@ -134,7 +139,7 @@ def generate_sintetic_diagram(df, N_samples=10000):
     
     # Genera numeri casuali uniformi
     uniform = np.random.uniform(np.min(int_IMF), np.max(int_IMF), N_samples)
-    print("Minimo valore generato:", np.min(uniform))
+    
     
     # Trova indici dove int_IMF >= uniform
     indices = np.searchsorted(int_IMF, uniform, side='right')
@@ -145,13 +150,30 @@ def generate_sintetic_diagram(df, N_samples=10000):
     df_out = df_unique.iloc[indices].copy()  # Copia delle righe selezionate dal DataFrame unico
     return df_out
 
-def generate_sintetic_diagram_from_isochrone(r,N_samples=1e6):
-    r_interpolate=interpolate_with_equispaced_mini(r,'Mini',int(1e4))
+def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
+    
+    #Interpolation of the df to better rappresent the IMF with the generated data
+    r_interpolate=interpolate_with_equispaced_mini(r,'Mini',int(1e3))
+    
+    #Evaluation of the IMF for each single value
     IMF_interpolate=calculate_IMF(r_interpolate)
+    
     r_interpolate=remove_non_strictly_decreasing(r_interpolate,IMF_interpolate)
     IMF_interpolate=calculate_IMF(r_interpolate)
     # Esempio di utilizzo
-    df_out_int= generate_sintetic_diagram(r_interpolate, N_samples=int(N_samples))
+    df_out_int= generate_sintetic_diagram_from_isochrone(r_interpolate, N_samples=int(N_samples))
     return df_out_int
+
+
+######################functions for multiple values ####################
+#                            of logAge and Zini                        #
+########################################################################
+
+def generate_syntetic_diagrams(df,N_samples=1e4):
+    df_out={}
+    for (logage,zini), df in  df.items():
+        df_out[(logage,zini)]= generate_cleened_sintetic_diagram_from_isochrone(df,N_samples)
+        
+    return df_out
 
 print('training classes imported')
