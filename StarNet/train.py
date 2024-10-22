@@ -2,6 +2,11 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
+##############################################################################################
+####################### format mangment to make ezpadova properly work########################
+##############################################################################################
 
 # Import the encoding to work with ezpadova
 if sys.platform == "win32":
@@ -20,6 +25,11 @@ except:
 from ezpadova.parsec import get_isochrones
 from ezpadova.config import configuration
 
+############################################################################################
+############################################################################################
+################################# Loading Data Section #####################################
+############################################################################################
+############################################################################################
 
 def load_data(min_age=0.0,max_age=0.0,age_step=0.0,Z_min=0.0152,Z_max=0.03,Z_step=0.0,phot='YBC_gaiaEDR3'):
     #Get the phat to the correct file
@@ -176,11 +186,92 @@ def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
 #                            of logAge and Zini                        #
 ########################################################################
 
-def generate_syntetic_diagrams(df,N_samples=1e4):
+def generate_syntetic_diagrams(df_in,N_samples=1e4):
     df_out={}
-    for (logage,zini), df in  df.items():
+    for (logage,zini), df in  df_in.items():
         df_out[(logage,zini)]= generate_cleened_sintetic_diagram_from_isochrone(df,N_samples)
         
     return df_out
 
+############################################################################################
+############################################################################################
+######################## Covolutional Neural Network Section ###############################
+############################################################################################
+############################################################################################
+
+#########################Immage generation function########################################
+
+def generate_image_from_histogram(x,y, output_size=(18, 18), cmap='gray', xlim=(-1,5), ylim=(15,-4.5),bins=(200,200),cmin=1):
+    """
+    Generates an image from a 2D histogram.
+    Attentinon: the axis orientation is not formatted as usal in the CMD or HR diagram, but are right handed oriented.
+    
+    Args:
+        x: Array of the x data
+        y: Array of the y data
+        output_size: Tuple containing the desired dimensions of the output image.
+        cmap: Colormap to use for visualization (default: 'gray').
+        xlim: Tuple containing the x-axis limits (min, max).
+        ylim: Tuple containing the y-axis limits (min, max).
+        bins: Tuple of the numbers of the bins (x-bins,y-bins); default: (200,200).
+        cmin: The minimum number of entries for bin (default: 1)
+
+    Returns:
+        A NumPy array representing the generated image.
+    """
+
+    # Create the image
+    plt.figure(figsize=output_size)
+    plt.hist2d(x,y,bins=bins, cmin=cmin,cmap='gray')
+    plt.axis('off')
+    plt.tight_layout()
+    if xlim!=None:
+        plt.gca().set_xlim(xlim)
+    if ylim!=None:
+        plt.gca().set_ylim(ylim)
+        
+    # Get the axies limits
+    xlim=plt.xlim()
+    ylim=plt.ylim()
+    axes_lim=xlim+ylim
+
+    # Save the image in memory (as a NumPy array)
+    fig = plt.gcf()
+    fig.canvas.draw()
+    data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))  # RGB image
+    plt.close(fig)
+
+    # Convert to grayscale (if needed)
+    if cmap == 'gray':
+        data = data[:, :, 0]
+
+    return data,axes_lim
+
+def generate_immages_and_labels(df_in,x_key='BP-RP',y_key='Gmag',xlim=(-1,5),ylim=(15,-4.5)):
+    immages=[]
+    labels=[]
+    axies_limits=[]
+    for (logage,zini), df in  df_in.items():
+        label=(logage,zini)
+        if x_key=='BP-RP':
+            x=np.array(df['G_BPmag'])-np.array(df['G_RPmag'])
+        else:
+            x=np.array(df[x_key])
+        y=np.array(df[y_key])
+        
+        #Generate immage
+        immage, axies_limit=generate_image_from_histogram(x,y,xlim=xlim,ylim=ylim)
+        axies_limits.append(axies_limit)
+        immages.append(immage)
+        labels.append(label)
+    
+    return immages,labels,axies_limits
+
+def plot_image(image,ax,axies_lim):
+    
+    ax.imshow(image, cmap='gray',extent=axies_lim)
+    plt.axis('tight')
+    plt.tight_layout()
+    
 print('training classes imported')
