@@ -8,6 +8,7 @@ if sys.platform == "win32":
     os.environ['PYTHONIOENCODING'] = 'utf-8'
 os.system('chcp 65001')
 
+#Load the configuration file to make aviable the configuration variable
 try:
     from ezpadova.config import reload_configuration
 
@@ -30,7 +31,11 @@ def load_data(min_age=0.0,max_age=0.0,age_step=0.0,Z_min=0.0152,Z_max=0.03,Z_ste
     else:
         df=get_isochrones(age_yr=(min_age,max_age,age_step),Z=(Z_min,Z_max,Z_step),photsys_file=photometric_system)
     
-    return df
+    #Groupping the data as function of logAge and initial metallicity
+    groups=df.groupby(['logAge','Zini'])
+    
+    df_out= dict(list(groups))
+    return df_out
 
 def calculate_IMF(df, mini_column='Mini', imf_column='int_IMF'):
     """
