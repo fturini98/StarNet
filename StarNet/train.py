@@ -149,7 +149,7 @@ def interpolate_with_equispaced_mini(df, mini_column, num_points):
 
     return df_interpolated
 
-def generate_sintetic_diagram_from_isochrone(df, N_samples=10000):
+def generate_synthetic_diagram_from_isochrone(df, N_samples=10000):
     # Rimuovere duplicati dalla colonna int_IMF
     df_unique = df.drop_duplicates(subset='int_IMF')
     
@@ -169,7 +169,7 @@ def generate_sintetic_diagram_from_isochrone(df, N_samples=10000):
     df_out = df_unique.iloc[indices].copy()  # Copia delle righe selezionate dal DataFrame unico
     return df_out
 
-def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
+def generate_cleened_synthetic_diagram_from_isochrone(r,N_samples=1e6):
     
     #Interpolation of the df to better rappresent the IMF with the generated data
     r_interpolate=interpolate_with_equispaced_mini(r,'Mini',int(1e3))
@@ -184,7 +184,7 @@ def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
     IMF_interpolate=calculate_IMF(r_interpolate)
     
     #Generation of the syntetic diagram's values
-    df_out_int= generate_sintetic_diagram_from_isochrone(r_interpolate, N_samples=int(N_samples))
+    df_out_int= generate_synthetic_diagram_from_isochrone(r_interpolate, N_samples=int(N_samples))
     return df_out_int
 
 
@@ -195,7 +195,7 @@ def generate_cleened_sintetic_diagram_from_isochrone(r,N_samples=1e6):
 def generate_syntetic_diagrams(df_in,N_samples=1e4):
     df_out={}
     for (logage,zini), df in  df_in.items():
-        df_out[(logage,zini)]= generate_cleened_sintetic_diagram_from_isochrone(df,N_samples)
+        df_out[(logage,zini)]= generate_cleened_synthetic_diagram_from_isochrone(df,N_samples)
         
     return df_out
 
