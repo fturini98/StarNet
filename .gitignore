@@ -12,3 +12,4 @@ __pycache__
 *.blg
 *.run.xml
 *log.txt
+*.pkl
