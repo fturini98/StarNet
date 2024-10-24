@@ -192,7 +192,7 @@ def generate_cleened_synthetic_diagram_from_isochrone(r,N_samples=1e6):
 #                            of logAge and Zini                        #
 ########################################################################
 
-def generate_syntetic_diagrams(df_in,N_samples=1e4):
+def generate_synthetic_diagrams(df_in,N_samples=1e4):
     df_out={}
     for (logage,zini), df in  df_in.items():
         df_out[(logage,zini)]= generate_cleened_synthetic_diagram_from_isochrone(df,N_samples)

@@ -17,7 +17,7 @@ The library works on four step:
 2) Transform the isochrones in synthetic diagrams:
     ```
     #Generate the DataFrame containing the synthetic diagrams
-    synthetics=StraNet.train.generate_synthetic_diagram_from_isochrone(df,Nsamples=1e4)
+    synthetics=StraNet.train.generate_synthetic_diagrams(df,Nsamples=1e4)
     
     #Generates the arraies to train the CNN
     immages,labels,axies_limits=StraNet.train.generate_immages_and_labels(synthetics)
