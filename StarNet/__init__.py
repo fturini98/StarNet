@@ -1,0 +1,1 @@
+from .train import StarNet_CNN as CNN

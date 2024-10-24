@@ -14,7 +14,10 @@ setup(
         'numpy',
         'pandas',
         'scipy',
-        'ezpadova @ git+https://github.com/mfouesneau/ezpadova.git@v2.0#egg=ezpadova'
+        'matplotlib',
+        'ezpadova @ git+https://github.com/mfouesneau/ezpadova.git@v2.0#egg=ezpadova',
+        'tensorflow',
+        'scikit-learn'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

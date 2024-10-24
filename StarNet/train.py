@@ -4,6 +4,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+#library for the CNN
+#import inspect
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+import pickle
+
 ##############################################################################################
 ####################### format mangment to make ezpadova properly work########################
 ##############################################################################################
@@ -199,9 +205,9 @@ def generate_syntetic_diagrams(df_in,N_samples=1e4):
 ############################################################################################
 ############################################################################################
 
-#########################Immage generation function########################################
+#########################Immage generation functions########################################
 
-def generate_image_from_histogram(x,y, output_size=(18, 18), cmap='gray', xlim=(-1,5), ylim=(15,-4.5),bins=(200,200),cmin=1):
+def generate_image_from_histogram(x,y, output_size=(2, 2), cmap='gray', xlim=(-1,5), ylim=(15,-4.5),bins=(200,200),cmin=1):
     """
     Generates an image from a 2D histogram.
     Attentinon: the axis orientation is not formatted as usal in the CMD or HR diagram, but are right handed oriented.
@@ -273,5 +279,245 @@ def plot_image(image,ax,axies_lim):
     ax.imshow(image, cmap='gray',extent=axies_lim)
     plt.axis('tight')
     plt.tight_layout()
+
+##################################################################################
+##################### function to train the CNN ##################################
+################################################################################## 
+
+class StarNet_CNN:
+    """
+    Classe per la creazione e l'addestramento di modelli CNN.
+
+    Fornisce metodi per dividere il dataset in training e validation, calcolare medie e deviazioni standard, creare modelli CNN, e addestrare i modelli.
+    """
+
+    def __init__(self):
+        """
+        Costruttore della classe.
+        """
+        self.default_file_name='default.pkl'
+        self.load_default_model()
+        
+
+    def divide_dataset(self, X, y, test_size=0.3, random_state=42):
+        """
+        Divide il dataset in set di training e validation.
+
+        Args:
+            X: Array contenente le features (immagini).
+            y: Array contenente i target (label).
+            test_size: Proporzione del dataset da utilizzare per la validation.
+            random_state: Seed per la riproducibilità.
+
+        Returns:
+            X_train, X_val, y_train, y_val: Set di training e validation.
+        """
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=test_size, random_state=random_state)
+        return X_train, X_val, y_train, y_val
+
+
+    def create_cnn_model(self):
+        """
+        Crea un modello CNN di base.
+
+        Args:
+            input_shape: Forma dell'input (es. (32, 32, 3)). (Default: viene utilizzato l'input_shape fornito in fase di inizializzazione)
+
+        Returns:
+            Modello CNN compilato.
+        """
+        model = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.input_shape),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(2),  # Assumiamo 2 output continui
+        ])
+
+        model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+        return model
     
+    def secure_normalization(self,x, mean, std):
+        return (x - mean) / std if np.abs(std) >= 1e-4 else (x - mean)
+
+    def normalize_array(self,data,means=None,stds=None):
+        if means is None and stds is None:
+            means = np.mean(data, axis=0)
+            stds = np.std(data, axis=0)
+        return np.array([self.secure_normalization(data[:, i], means[i], stds[i]) for i in range(data.shape[1])]).T , (means,stds)
+    
+    def train_model(self, X, y,X_val=None,y_val=None, model='default', epochs=30, batch_size=10,test_size=0.2, random_state=42):
+        """
+        Addestra il modello CNN.
+
+        Args:
+            model: Modello CNN da addestrare.
+            X_train, y_train: Set di training.
+            X_val, y_val: Set di validation.
+            epochs: Numero di epoche.
+            batch_size: Dimensione del batch.
+
+        Returns:
+            history: Oggetto che contiene la cronologia dell'addestramento.
+        """
+        if X_val is None and y_val is None:
+            # Esempio d'uso:
+            X =  np.array(X)
+            y =  np.array(y)
+
+            # Convert X to NumPy array and add channel dimension if necessary
+            if not isinstance(X, np.ndarray):
+                X = np.array(X)
+            if X.ndim == 3:
+                X = np.expand_dims(X, axis=-1)
+
+            # Dividi il dataset
+            X_train, X_val, y_train, y_val = self.divide_dataset(X, y,test_size, random_state)
+        else:
+            X_train=X
+            X_val=X_val
+            y_train=y
+            y_val=y_val
+        
+        self.input_shape=X_train.shape[1:]
+        
+        if model=='default':
+            model=self.create_cnn_model()
+        
+        #Linearization of the logAge range
+        y_val[:,0]=np.power(10,y_val[:,0])
+        y_train[:,0]=np.power(10,y_train[:,0])
+        
+        #Normalization
+        y_train,self.mean_std=self.normalize_array(y_train)
+        y_val,_=self.normalize_array(y_val,self.mean_std[0],self.mean_std[1])
+        
+        self.history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(X_val, y_val))
+        self.model=model
+        
+    def plot_loss(self):
+        # Plot della loss
+        plt.plot(self.history.history['loss'])
+        plt.plot(self.history.history['val_loss'])
+        plt.title('Model loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Val'], loc='upper right')
+        plt.gca().set_yscale('log')
+
+    def plot_mae(self):
+        # Plot del MAE
+        plt.plot(self.history.history['mae'])
+        plt.plot(self.history.history['val_mae'])
+        plt.title('Model MAE')
+        plt.ylabel('MAE')
+        plt.xlabel('Epoch')
+        plt.legend(['Train',  'Val'], loc='upper right')
+        plt.gca().set_yscale('log')
+
+    def secure_denormalization(self,x, mean, std):
+        """
+        Denormalizza i dati normalizzati utilizzando media e deviazione standard.
+
+        Args:
+            x: Array di dati normalizzati.
+            mean: Media originale utilizzata per la normalizzazione.
+            std: Deviazione standard originale utilizzata per la normalizzazione.
+
+        Returns:
+            Dati denormalizzati.
+        """
+        return (x * std) + mean if np.abs(std) >= 1e-4 else (x + mean)
+
+    def denormalize_array(self,normalized_data, means, stds):
+        """
+        Denormalizza un array di dati utilizzando le medie e deviazioni standard.
+
+        Args:
+            normalized_data: Array di dati normalizzati.
+            means: Media originale per ciascuna colonna.
+            stds: Deviazione standard originale per ciascuna colonna.
+
+        Returns:
+            Dati denormalizzati.
+        """
+        return np.array([self.secure_denormalization(normalized_data[:, i], means[i], stds[i]) for i in range(normalized_data.shape[1])]).T
+    
+    def predict(self,x):
+        prediction=self.model.predict(x)
+        return self.denormalize_array(prediction,self.mean_std[0],self.mean_std[1])
+    
+    
+    ###########################################################################
+    #######################Load and write models###############################
+    ###########################################################################
+    
+    def save_to_file(self, filename):
+        """
+        Salva l'istanza corrente della classe in un file usando pickle.
+
+        Args:
+            filename (str): Il percorso e il nome del file in cui salvare l'istanza.
+        """
+        try:
+            with open(filename, 'wb') as f:
+                pickle.dump(self, f)
+            print(f"Classe salvata correttamente in {filename}")
+        except Exception as e:
+            print(f"Errore nel salvataggio: {e}")
+            
+    def load_from_file(self, file_path):
+        """
+        Carica lo stato dell'istanza da un file pickle.
+
+        Args:
+            file_path: Il percorso del file pickle da caricare.
+        """
+        try:
+            
+            with open(file_path, 'rb') as f:
+
+                loaded_instance = pickle.load(f)
+            
+            # Sovrascrivi i dati dell'istanza corrente con quelli caricati
+            self.model = loaded_instance.model
+            self.mean_std = loaded_instance.mean_std
+            self.input_shape=loaded_instance.input_shape
+            self.history=loaded_instance.history
+            # Puoi aggiungere ulteriori attributi da sovrascrivere se necessario
+
+            print("Modello e dati caricati con successo.")
+        except Exception as e:
+            print(f"Errore nel caricamento: {e}")
+
+    def get_default_models_folder_path(self):
+        # Ottieni la directory corrente (dove si trova il file attuale)
+        current_dir = os.path.dirname(__file__)
+
+        # Risali alla cartella principale di StarNet (se sei in una sotto-libreria)
+        starnet_dir = os.path.abspath(current_dir)
+        
+        #starnet_path = inspect.getfile(StarNet)
+        #starnet_dir = os.path.dirname(starnet_path)
+
+        #parte comune
+        default_models_dir=os.path.join(starnet_dir,'default_models')
+        return default_models_dir
+    
+    def save_default_model(self):
+        default_models_dir=self.get_default_models_folder_path()
+        
+        default_model_file_path=os.path.join(default_models_dir,self.default_file_name)
+        
+        self.save_to_file(default_model_file_path)
+    
+    def load_default_model(self):
+        default_models_dir=self.get_default_models_folder_path()
+        
+        default_model_file_path=os.path.join(default_models_dir,self.default_file_name)
+        
+        self.load_from_file(default_model_file_path)
+             
 print('training classes imported')
