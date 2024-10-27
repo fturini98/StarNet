@@ -106,6 +106,7 @@ To understand the distribution of errors shown in __Fig.1__, it is important to 
 ![age diffrences](doc_immages/Age_diffrences.png)
 
 *__Fig.2__:Diffrences between the estimated age by the CNN and the real age of the synthetic diagram as function of the population's age.*
+
 When representing the isochrones (__Fig.3__), it becomes evident that the synthetic diagrams for ages close to 10 Gyr are nearly overlapping. On the other hand, for diagrams with ages near 0.5 Gyr, the relative error is greater. Moreover, the density of points near the turn-off is lower, as the various populations are better separated, which reduces the estimation efficiency of the CNN.
 
 ![Synthetic diagrams](doc_immages/Synthetic%20diagrams.png)
