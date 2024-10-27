@@ -102,10 +102,14 @@ The CNN trained with isochrones in the age range of (5e8,1e10) [yr] with a age's
 *__Fig.1__: Histogram of synthetic data distribution as a function of age and metallicity. The figure shows the quantity of synthetic diagrams within each percentage error range specified in the legend for age and metallicity estimation.*
 
 To understand the distribution of errors shown in __Fig.1__, it is important to examine the difference between the estimated age and the actual age. As seen in __Fig.2__, the minimum error occurs for ages around 3.5 Gyr.
+
 ![age diffrences](doc_immages/Age_diffrences.png)
+
 *__Fig.2__:Diffrences between the estimated age by the CNN and the real age of the synthetic diagram as function of the population's age.*
 When representing the isochrones (__Fig.3__), it becomes evident that the synthetic diagrams for ages close to 10 Gyr are nearly overlapping. On the other hand, for diagrams with ages near 0.5 Gyr, the relative error is greater. Moreover, the density of points near the turn-off is lower, as the various populations are better separated, which reduces the estimation efficiency of the CNN.
+
 ![Synthetic diagrams](doc_immages/Synthetic%20diagrams.png)
+
 *__Fig.3__:Scatter plots of Synthetic diagrams with metallicity=0.0152 and ages between (0.5,10) Gyr.*
 
 ### Possible Improvements
