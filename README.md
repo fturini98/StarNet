@@ -10,17 +10,17 @@ The library works on four step:
     import StarNet.train
 
     #Load the isochrones from the CMD website
-    isochrones=StraNet.train.load_data(min_age=5e8,max_age=1e10,age_step=1e8,Z_step=0.005)
+    isochrones=StarNet.train.load_data(min_age=5e8,max_age=1e10,age_step=1e8,Z_step=0.005)
     ```
     - The loaded isochrones are presented as a pandas DataFrame where the keys are each one a tuple containig the log(Age) and the initial maetallicity (Z) of each population retrived form the CMD site.
 
 2) Transform the isochrones in synthetic diagrams:
     ```
     #Generate the DataFrame containing the synthetic diagrams
-    synthetics=StraNet.train.generate_synthetic_diagrams(df,Nsamples=1e4)
+    synthetics=StarNet.train.generate_synthetic_diagrams(df,Nsamples=1e4)
     
     #Generates the arraies to train the CNN
-    immages,labels,axies_limits=StraNet.train.generate_immages_and_labels(synthetics)
+    immages,labels,axies_limits=StarNet.train.generate_immages_and_labels(synthetics)
     ```
 
     - The default settings for generating the immages are aviable in the [source code](StarNet/train.py), the most relevant are:
@@ -36,7 +36,7 @@ The library works on four step:
         ```
         import matplotlib.pyplot as plt
         _,ax=plt.subplots(1,1,figsize=(12,12))
-        StraNet.train.plot_image(immages[0],ax,axies_limits[0])
+        StarNet.train.plot_image(immages[0],ax,axies_limits[0])
         ```
 
 3) Create the CNN model and train it:
@@ -47,7 +47,7 @@ The library works on four step:
     #import the default.pkl model if it's present in the 
     #default_models folder, else raise an error, but the 
     #class is redy to be trained')
-    CNN=StraNet.CNN()
+    CNN=StarNet.CNN()
 
     #Train the model
     CNN.train_model(immages,labels,X_val=None,y_val=None, model='default', epochs=30, batch_size=10,test_size=0.2, random_state=42)
@@ -95,9 +95,9 @@ CNN.plot_loss()
 #Show the graph about the Mean Absolute Error function obtained during the training
 CNN.plot_mae()
 ```
-## Efficency estimation
-The CNN trained with isochrones in the age range of (5e8,1e10) [yr] with a age's step of 1e8 [yr], have the following efficency in the parameter estimation:
-![efficency estimation](doc_immages/Efficency_estimation.png)
+## Accuracy estimation
+The CNN trained with isochrones in the age range of (5e8,1e10) [yr] with a age's step of 1e8 [yr], have the following Accuracy in the parameter estimation:
+![Accuracy estimation](doc_immages/Efficency_estimation.png)
 
 *__Fig.1__: Histogram of synthetic data distribution as a function of age and metallicity. The figure shows the quantity of synthetic diagrams within each percentage error range specified in the legend for age and metallicity estimation.*
 
@@ -107,7 +107,7 @@ To understand the distribution of errors shown in __Fig.1__, it is important to 
 
 *__Fig.2__:Diffrences between the estimated age by the CNN and the real age of the synthetic diagram as function of the population's age.*
 
-When representing the isochrones (__Fig.3__), it becomes evident that the synthetic diagrams for ages close to 10 Gyr are nearly overlapping. On the other hand, for diagrams with ages near 0.5 Gyr, the relative error is greater. Moreover, the density of points near the turn-off is lower, as the various populations are better separated, which reduces the estimation efficiency of the CNN.
+When representing the isochrones (__Fig.3__), it becomes evident that the synthetic diagrams for ages close to 10 Gyr are nearly overlapping. On the other hand, for diagrams with ages near 0.5 Gyr, the relative error is greater. Moreover, the density of points near the turn-off is lower, as the various populations are better separated, which reduces the estimation accuracy of the CNN.
 
 ![Synthetic diagrams](doc_immages/Synthetic%20diagrams.png)
 
